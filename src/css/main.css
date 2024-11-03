@@ -801,3 +801,11 @@ a-tab[selected]::part(base) {
     display: none;
   }
 }
+
+@media (max-width: 1200px) {
+  /* For smaller screens */
+  #videoElement {
+      width: 100vw; /* Full width for smaller screens */
+      height: auto; /* Auto height to maintain aspect ratio */
+  }
+}

@@ -3,5 +3,13 @@
   "editor.formatOnSave": true,
   "eslint.enable": true,
   "eslint.run": "onType",
-  "eslint.validate": ["javascript", "javascriptreact", "html", "typescriptreact"]
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "html",
+    "typescriptreact"
+  ],
+  "[html]": {
+    "editor.defaultFormatter": "mohd-akram.vscode-html-format"
+  }
 }

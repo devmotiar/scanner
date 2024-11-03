@@ -120,6 +120,7 @@ import './components/clipboard-copy.js';
 
       await new Promise((resolve) => setTimeout(resolve, 1000));
     } catch {
+
     }
 
 
@@ -146,6 +147,138 @@ import './components/clipboard-copy.js';
 
     scan();
   }
+
+
+  // new code start
+
+  // async function getCameras() {
+  //   try {
+  //     const devices = await navigator.mediaDevices.enumerateDevices();
+  //     const videoDevices = devices.filter(device => device.kind === 'videoinput');
+
+  //     const cameraSelect = document.getElementById('cameraSelect');
+  //     cameraSelect.innerHTML = '';
+  //     videoDevices.forEach((device, index) => {
+  //       const option = document.createElement('option');
+  //       option.value = device.deviceId;
+  //       option.textContent = device.label || `Camera ${index + 1}`;
+  //       cameraSelect.appendChild(option);
+  //       console.log(`Device found: ${device.label || `Camera ${index + 1}`} with ID: ${device.deviceId}`);
+  //     });
+  //   } catch (error) {
+  //     console.error('Error enumerating devices:', error);
+  //   }
+  // }
+
+  // getCameras();
+
+  // const cameraSelect = document.getElementById('cameraSelect');
+  // cameraSelect.addEventListener('change', async () => {
+  //   const deviceId = cameraSelect.value;
+
+  //   if (deviceId) {
+  //     try {
+  //       const stream = await navigator.mediaDevices.getUserMedia({
+  //         video: { deviceId: { exact: deviceId } }
+  //       });
+
+
+  //       const videoElement = document.querySelector('video'); 
+  //       if (videoElement) {
+  //         videoElement.srcObject = stream;
+  //       } else {
+  //         console.error('Video element not found. Check the selector.');
+  //       }
+  //     } catch (error) {
+  //       console.error('Error accessing the camera: ', error);
+  //     }
+  //   }
+  // });
+
+  // code for camera switch start
+  let currentStream;
+  let videoDevices = [];
+  async function getCameras() {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      videoDevices = devices.filter(device => device.kind === 'videoinput');
+
+
+      const cameraSelect = document.getElementById('cameraSelect');
+      cameraSelect.innerHTML = '';
+
+
+      videoDevices.forEach((device, index) => {
+        const option = document.createElement('option');
+        option.value = device.deviceId;
+        option.textContent = device.label || `Camera ${index + 1}`;
+        cameraSelect.appendChild(option);
+      });
+    } catch (error) {
+      console.error('Error enumerating devices:', error);
+    }
+  }
+
+
+  async function startCamera(deviceId) {
+    if (currentStream) {
+      currentStream.getTracks().forEach(track => track.stop());
+    }
+
+    try {
+
+      currentStream = await navigator.mediaDevices.getUserMedia({
+        video: { deviceId: { exact: deviceId } }
+      });
+
+      const videoElement = document.getElementById('videoElement');
+      videoElement.srcObject = currentStream;
+
+
+      const videoTrack = currentStream.getVideoTracks()[0];
+      const { width, height } = videoTrack.getSettings();
+
+
+      videoElement.width = width || 1280;
+      videoElement.height = height || 720;
+
+
+      const selectedCameraLabel = document.querySelector(`#cameraSelect option[value="${deviceId}"]`).textContent;
+      if (selectedCameraLabel.includes("OBS")) {
+        videoElement.style.position = "fixed";
+        videoElement.style.top = "0";
+        videoElement.style.left = "0";
+        videoElement.style.width = "50vw";
+        videoElement.style.height = "100vh";
+        videoElement.style.zIndex = "1";
+        videoElement.style.objectFit = "cover";
+      } else {
+
+        videoElement.style.position = "relative";
+        videoElement.style.width = "auto";
+        videoElement.style.height = "auto";
+      }
+    } catch (error) {
+      console.error('Error accessing the camera:', error);
+    }
+  }
+  getCameras();
+
+
+  const cameraSelect = document.getElementById('cameraSelect');
+  cameraSelect.addEventListener('change', () => {
+    const selectedDeviceId = cameraSelect.value;
+    if (selectedDeviceId) {
+      startCamera(selectedDeviceId);
+    }
+  });
+
+
+  // code for camera switch end
+  // new code end 
+
+
+
 
 
 
