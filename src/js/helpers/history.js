@@ -1,4 +1,5 @@
 import { getHistory, setHistory, getSettings } from '../services/storage.js';
+import { whiteNoise } from '../utils/whiteNoise.js';
 
 /**
  * Renders the history list. If there are no items in history, it will show a message.
@@ -87,6 +88,8 @@ export async function addToHistory(item) {
     if (!setHistoryError) {
       renderHistoryList(data);
     }
+  } else {
+    whiteNoise({ duration: 1000, volume: 0.05 });
   }
 }
 

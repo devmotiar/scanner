@@ -40,6 +40,7 @@ import './components/clipboard-copy.js';
   const historyDialog = document.getElementById('historyDialog');
   const settingsBtn = document.getElementById('settingsBtn');
   const settingsDialog = document.getElementById('settingsDialog');
+  const copyAllButton = document.getElementById('copyAll');
   const settingsForm = document.forms['settings-form'];
   let shouldScan = true;
   let rafId;
@@ -54,7 +55,7 @@ import './components/clipboard-copy.js';
     tabGroupEl.hidden = true;
     alertEl.hidden = false;
     alertEl.textContent = barcodeReaderError?.message;
-    return; // Stop the script execution as BarcodeDetector API is not supported.
+    return;
   }
 
   capturePhotoEl.addEventListener('capture-photo:video-play', handleCapturePhotoVideoPlay, {
@@ -73,6 +74,7 @@ import './components/clipboard-copy.js';
   initializeSettingsForm(settingsForm);
   renderSupportedFormats(barcodeFormats);
   renderHistoryList((await getHistory()).value || []);
+  copyAllButton.addEventListener('click', handleCopyAllButtonClick);
 
   if (!isWebShareSupported()) {
     document.querySelectorAll('web-share').forEach(el => {
@@ -87,9 +89,12 @@ import './components/clipboard-copy.js';
    *
    * @returns {Promise<void>} - A Promise that resolves when the barcode is detected.
    */
+
+  const originalScanSound = new Audio('path/to/confirm-chime.mp3');
+  const duplicateScanSound = new Audio('path/to/muted-beep.mp3');
+
   async function scan() {
     log('Scanning...');
-
     scanInstructionsEl.hidden = false;
 
     try {
@@ -99,35 +104,51 @@ import './components/clipboard-copy.js';
       if (!barcodeValue) {
         throw new Error(NO_BARCODE_DETECTED);
       }
+      const historyList = await getHistory();
+      const isDuplicate = historyList.value.includes(barcodeValue);
 
-      window.cancelAnimationFrame(rafId);
+
+      playScanSound(isDuplicate);
+
+
       showResult(barcodeValue, cameraResultsEl);
-      addToHistory(barcodeValue);
-      scanInstructionsEl.hidden = true;
-      scanBtn.hidden = false;
-      scanFrameEl.hidden = true;
+      if (!isDuplicate) {
+        addToHistory(barcodeValue);
+      }
       triggerScanEffects();
-      return;
+
+
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     } catch {
-      // If no barcode is detected, the error is caught here.
-      // We can ignore the error and continue scanning.
     }
+
 
     if (shouldScan) {
       rafId = window.requestAnimationFrame(() => scan());
     }
   }
 
-  /**
-   * Handles the click event on the scan button.
-   * It is responsible for clearing previous results and starting the scan process again.
-   */
+
+  function playScanSound(isDuplicate) {
+    if (isDuplicate) {
+      duplicateScanSound.play();
+    } else {
+      originalScanSound.play();
+    }
+  }
+
+
   function handleScanButtonClick() {
     scanBtn.hidden = true;
     scanFrameEl.hidden = false;
     hideResult(cameraResultsEl);
+
+
     scan();
   }
+
+
+
 
   /**
    * Handles the tab show event.
@@ -299,6 +320,17 @@ import './components/clipboard-copy.js';
     }
   }
 
+  async function handleCopyAllButtonClick() {
+    try {
+      // Assuming you want to copy all barcode values in history to the clipboard.
+      const historyList = await getHistory();
+      const textToCopy = historyList.value.join(',\n'); // Join values with a newline
+
+      await navigator.clipboard.writeText(textToCopy);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  }
   /**
    * Handles the error event on the capture-photo element.
    * It is responsible for displaying an error message if the camera cannot be accessed or permission is denied.
